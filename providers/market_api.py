@@ -1,53 +1,54 @@
 import requests
 
 
-API_URL = "https://indian-stock-market-api.onrender.com"
-
-
 class MarketDataSource:
     """
-    Free market-data connector for NSE/BSE stocks.
+    Free Indian market-data provider.
 
-    This is currently used for the first market-data pipeline test.
-    Later, additional validated sources will be added.
+    Source:
+    TejHQ keyless API
+
+    Provides end-of-day OHLCV data for NSE/BSE equities.
     """
 
+    BASE_URL = "https://api.tejhq.dev/v1"
+
     def __init__(self):
-        self.base_url = API_URL
+        self.name = "TejHQ"
 
-    def get_stock(self, symbol):
+    def get_stock(self, symbol, exchange="NSE"):
         """
-        Get data for one stock.
+        Get historical OHLCV data for one stock.
         """
-        url = f"{self.base_url}/stock"
+
+        url = f"{self.BASE_URL}/ohlcv/{exchange}/{symbol}.json"
 
         response = requests.get(
             url,
-            params={
-                "symbol": symbol,
-                "res": "num"
-            },
-            timeout=20
-        )
-
-        response.raise_for_status()
-        return response.json()
-
-    def get_multiple_stocks(self, symbols):
-        """
-        Get data for multiple stocks in one request.
-        """
-
-        url = f"{self.base_url}/stock/list"
-
-        response = requests.get(
-            url,
-            params={
-                "symbols": ",".join(symbols),
-                "res": "num"
-            },
             timeout=30
         )
 
         response.raise_for_status()
+
         return response.json()
+
+    def get_multiple_stocks(self, symbols, exchange="NSE"):
+        """
+        Get data for multiple stocks.
+
+        The keyless API is queried one symbol at a time.
+        """
+
+        results = {}
+
+        for symbol in symbols:
+            try:
+                data = self.get_stock(symbol, exchange)
+                results[symbol] = data
+
+            except Exception as error:
+                results[symbol] = {
+                    "error": str(error)
+                }
+
+        return results
