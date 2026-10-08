@@ -13,7 +13,7 @@ def main():
     print(f"\nTotal universe: {len(stocks)} stocks")
 
     # First test with 10 stocks
-    test_stocks = stocks[:10]
+    test_stocks = stocks[:50]
 
     print(f"\nTesting: {len(test_stocks)} stocks")
 
