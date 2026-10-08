@@ -10,40 +10,65 @@ from data_sources.chartink import ChartinkDataSource
 
 def main():
 
-    print("================================")
-    print("RupAI Chartink Connector Test")
-    print("================================")
+    print("========================================")
+    print("RupAI Chartink Scanner Test")
+    print("========================================")
 
     chartink = ChartinkDataSource()
 
-    # Public Chartink page for connection testing
-    scan_url = "https://chartink.com/"
-
-    print(
-        f"\nTesting URL: {scan_url}"
+    scanner_url = (
+        "https://chartink.com/"
+        "screener/profit-jump-by-200"
     )
+
+    print("\nScanner:")
+    print(scanner_url)
 
     try:
 
         result = chartink.get_scan_results(
-            scan_url
+            scanner_url
         )
 
-        print(
-            "\n✅ Chartink request successful."
-        )
-
-        print("Source:", result["source"])
+        print("\nSource:", result["source"])
         print("Status:", result["status"])
         print(
-            "Content length:",
-            result["content_length"]
+            "Stocks found:",
+            result["count"]
         )
+
+        print("\nMatched stocks:")
+
+        if result["stocks"]:
+
+            for symbol in result["stocks"]:
+                print("✅", symbol)
+
+        else:
+
+            print(
+                "⚠️ No symbols extracted."
+            )
+
+        if result["count"] > 0:
+
+            print(
+                "\n🎉 CHARTINK SCANNER "
+                "RESULT TEST SUCCESSFUL"
+            )
+
+        else:
+
+            print(
+                "\n⚠️ Chartink page loaded, "
+                "but scanner symbols were not "
+                "found in the HTML."
+            )
 
     except Exception as error:
 
         print(
-            "\n❌ Chartink request failed."
+            "\n❌ Chartink scanner test failed."
         )
 
         print(
