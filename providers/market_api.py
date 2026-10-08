@@ -5,10 +5,8 @@ class MarketDataSource:
     """
     Free Indian market-data provider.
 
-    Source:
     TejHQ keyless API
-
-    Provides end-of-day OHLCV data for NSE/BSE equities.
+    Provides NSE/BSE end-of-day OHLCV data.
     """
 
     BASE_URL = "https://api.tejhq.dev/v1"
@@ -21,7 +19,7 @@ class MarketDataSource:
         Get historical OHLCV data for one stock.
         """
 
-        url = f"{self.BASE_URL}/ohlcv/{exchange}/{symbol}.json"
+        url = f"{self.BASE_URL}/ohlcv/{exchange.lower()}/{symbol}"
 
         response = requests.get(
             url,
@@ -34,9 +32,7 @@ class MarketDataSource:
 
     def get_multiple_stocks(self, symbols, exchange="NSE"):
         """
-        Get data for multiple stocks.
-
-        The keyless API is queried one symbol at a time.
+        Get market data for multiple stocks.
         """
 
         results = {}
