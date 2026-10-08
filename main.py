@@ -1,21 +1,47 @@
-import os
-import requests
+from data_collector import collect_market_data
+from alerts.telegram import TelegramAlert
 
-BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
-CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 
-message = "✅ RupAI Market Intelligence is online!\n\nGitHub → Python → Telegram connection successful."
+def format_market_report(data):
+    """
+    Convert collected market data into a Telegram-friendly report.
+    """
 
-url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+    message = "📊 RupAI Market Data Test\n\n"
 
-response = requests.post(
-    url,
-    json={
-        "chat_id": CHAT_ID,
-        "text": message
-    }
-)
+    if isinstance(data, dict):
+        message += f"Data received: ✅\n\n"
+        message += str(data)[:3500]
+    else:
+        message += "Data received: ✅\n\n"
+        message += str(data)[:3500]
 
-response.raise_for_status()
+    return message
 
-print("Telegram message sent successfully!")
+
+def main():
+    print("Starting RupAI Market Intelligence...")
+
+    # Collect market data
+    market_data = collect_market_data()
+
+    if not market_data:
+        print("❌ No market data received.")
+        return
+
+    print("✅ Market data received.")
+
+    # Create Telegram alert service
+    telegram = TelegramAlert()
+
+    # Format report
+    report = format_market_report(market_data)
+
+    # Send report
+    telegram.send_message(report)
+
+    print("✅ Market report sent to Telegram.")
+
+
+if __name__ == "__main__":
+    main()
