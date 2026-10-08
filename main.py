@@ -1,39 +1,33 @@
-import os
-import requests
+from data_collector import collect_market_data
+from alerts.telegram import TelegramAlert
 
 
 def main():
-    token = os.environ["TELEGRAM_BOT_TOKEN"]
-    chat_id = os.environ["TELEGRAM_CHAT_ID"]
+    print("🚀 Starting RupAI Market Intelligence...")
 
-    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    # 1. Collect market data
+    market_data = collect_market_data()
 
+    if not market_data:
+        print("❌ No market data received.")
+        return
+
+    print("✅ Market data received.")
+
+    # 2. Create Telegram alert service
+    telegram = TelegramAlert()
+
+    # 3. Prepare message
     message = (
-        "🧪 RupAI Telegram Diagnostic Test\n\n"
-        "GitHub Actions is running successfully.\n"
-        "Telegram API connection is being tested."
+        "📊 RupAI Market Data Report\n\n"
+        "Market data collection successful! ✅\n\n"
+        f"{str(market_data)[:3500]}"
     )
 
-    response = requests.post(
-        url,
-        json={
-            "chat_id": chat_id,
-            "text": message
-        },
-        timeout=20
-    )
+    # 4. Send to Telegram
+    telegram.send_message(message)
 
-    print("Telegram HTTP status:", response.status_code)
-    print("Telegram API response:", response.text)
-
-    response.raise_for_status()
-
-    result = response.json()
-
-    if result.get("ok") is True:
-        print("✅ Telegram accepted the message.")
-    else:
-        print("❌ Telegram did not accept the message.")
+    print("✅ Market data sent to Telegram.")
 
 
 if __name__ == "__main__":
