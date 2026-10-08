@@ -20,6 +20,10 @@ class TelegramAlert:
         Send a text message to Telegram.
         """
 
+        # Telegram text message limit is 4096 characters.
+        # Keep a safe limit for our market reports.
+        message = str(message)[:3000]
+
         url = f"{self.base_url}/sendMessage"
 
         response = requests.post(
@@ -31,6 +35,12 @@ class TelegramAlert:
             timeout=20
         )
 
-        response.raise_for_status()
+        print("Telegram HTTP status:", response.status_code)
+        print("Telegram API response:", response.text)
+
+        if response.status_code != 200:
+            raise RuntimeError(
+                f"Telegram API error: {response.text}"
+            )
 
         return response.json()
