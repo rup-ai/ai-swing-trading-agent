@@ -9,19 +9,32 @@ from data_sources.moneycontrol import MoneycontrolDataSource
 
 
 def main():
+    print("=" * 45)
+    print("RupAI Moneycontrol Connector Test")
+    print("=" * 45)
+
     source = MoneycontrolDataSource()
-    result = source.get_stock_data()
 
-    print("Source:", result["source"])
-    print("Status:", result["status"])
-    print("Company:", result["title"])
-    print("Metrics extracted:", result["metrics_extracted"])
-    print("\n--- Extracted Metrics ---")
+    # Public Moneycontrol market page
+    url = "https://www.moneycontrol.com/markets/"
 
-    for key, value in result["fundamentals"].items():
-        print(f"{key}: {value if value is not None else 'Not found'}")
+    try:
+        result = source.get_page_data(url)
 
-    print("\nNote:", result["note"])
+        print("\nSource:", result["source"])
+        print("Status:", result["status"])
+        print("Page title:", result["title"])
+        print("HTML content length:", result["content_length"])
+        print("\nPage preview:")
+        print(result["page_text_preview"])
+        print("\nNote:", result["note"])
+
+        print("\nSUCCESS: Moneycontrol page fetched.")
+
+    except Exception as error:
+        print("\nTEST FAILED")
+        print("Error:", repr(error))
+        raise
 
 
 if __name__ == "__main__":
