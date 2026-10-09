@@ -10,18 +10,29 @@ from data_sources.moneycontrol import MoneycontrolDataSource
 
 def main():
     source = MoneycontrolDataSource()
-    result = source.get_stock_data()
 
-    print("Source:", result["source"])
-    print("Status:", result["status"])
-    print("Company:", result["title"])
-    print("Metrics extracted:", result["metrics_extracted"])
-    print("\n--- Extracted Metrics ---")
+    try:
+        url = source.RELIANCE_URL
+        html = source.get_page(url)
 
-    for key, value in result["fundamentals"].items():
-        print(f"{key}: {value if value is not None else 'Not found'}")
+        print("HTTP request successful")
+        print("URL:", url)
+        print("HTML length:", len(html))
+        print("\n--- HTML preview (first 2500 characters) ---")
+        print(html[:2500])
 
-    print("\nNote:", result["note"])
+        text = source._clean_text(html)
+
+        print("\n--- Page text preview (first 2500 characters) ---")
+        print(text[:2500])
+
+        result = source.get_stock_data(url)
+        print("\nMetrics extracted:", result["metrics_extracted"])
+        print(result["fundamentals"])
+
+    except Exception as error:
+        print("\nDEBUG TEST ERROR:", repr(error))
+        raise
 
 
 if __name__ == "__main__":
