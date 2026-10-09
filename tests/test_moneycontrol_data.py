@@ -11,28 +11,28 @@ from data_sources.moneycontrol import MoneycontrolDataSource
 def main():
     source = MoneycontrolDataSource()
 
-    try:
-        url = source.RELIANCE_URL
-        html = source.get_page(url)
+    print("=" * 45)
+    print("RupAI Moneycontrol Data Extraction Test")
+    print("=" * 45)
 
-        print("HTTP request successful")
-        print("URL:", url)
-        print("HTML length:", len(html))
-        print("\n--- HTML preview (first 2500 characters) ---")
-        print(html[:2500])
+    result = source.get_stock_data()
 
-        text = source._clean_text(html)
+    print("Source:", result["source"])
+    print("Status:", result["status"])
+    print("Company:", result["title"])
+    print("Metrics extracted:", result["metrics_extracted"])
 
-        print("\n--- Page text preview (first 2500 characters) ---")
-        print(text[:2500])
+    print("\n--- Market Data ---")
+    for key, value in result["fundamentals"].items():
+        print(f"{key}: {value if value is not None else 'Not found'}")
 
-        result = source.get_stock_data(url)
-        print("\nMetrics extracted:", result["metrics_extracted"])
-        print(result["fundamentals"])
-
-    except Exception as error:
-        print("\nDEBUG TEST ERROR:", repr(error))
-        raise
+    if result["metrics_extracted"] == 0:
+        print("\nWARNING: No metrics found.")
+        print("Page preview:")
+        print(result["page_text_preview"])
+    else:
+        print("\nExtraction returned data.")
+        print("Note:", result["note"])
 
 
 if __name__ == "__main__":
