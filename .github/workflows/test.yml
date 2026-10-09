@@ -19,6 +19,8 @@ jobs:
       - name: Install requests
         run: pip install requests
 
-      ```yaml
-      - name: Run Market API test
-        run: PYTHONPATH=. python -m tests.test_market_api
+      - name: Run Telegram test
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python tests/test_market_api.py
