@@ -1,59 +1,55 @@
+
+from providers.market_api import MarketDataSource
 from providers.data_normalizer import MarketDataNormalizer
 
 
 def main():
+    symbol = "RELIANCE"
 
-    print("================================")
-    print("RupAI Data Normalizer Test")
-    print("================================")
+    print("Testing real API data for", symbol)
 
+    api = MarketDataSource()
     normalizer = MarketDataNormalizer()
 
-    # Sample NSE-style recent data
-    recent_data = {
-        "priceInfo": {
-            "lastPrice": 1300,
-            "previousClose": 1280,
-            "change": 20,
-            "pChange": 1.56
-        }
-    }
-
-    # Sample historical data
-    historical_data = {
-        "data": [
-            {
-                "date": "2026-07-14",
-                "open": 1290,
-                "high": 1310,
-                "low": 1285,
-                "close": 1300,
-                "volume": 1000000,
-                "turnover": 1300000000
-            }
-        ]
-    }
+    raw_data = api.get_stock(symbol, exchange="NSE")
 
     result = normalizer.normalize(
-        "RELIANCE",
-        recent_data,
-        historical_data
+        symbol=symbol,
+        historical_data=raw_data
     )
 
-    print("\nNormalized data:")
-    print(result)
+    rows = result["historical"]
 
-    if (
-        result["symbol"] == "RELIANCE"
-        and result["recent"]["last_price"] == 1300
-        and len(result["historical"]) == 1
-    ):
+    if not rows:
+        raise AssertionError("No historical records returned")
 
-        print("\n✅ NORMALIZER TEST SUCCESSFUL")
+    required_fields = [
+        "date", "open", "high", "low", "close", "volume"
+    ]
 
-    else:
+    for row in rows:
+        missing = [
+            field for field in required_fields
+            if row.get(field) is None
+        ]
+        if missing:
+            raise AssertionError(
+                f"Missing fields in {row.get('date')}: {missing}"
+            )
 
-        print("\n❌ NORMALIZER TEST FAILED")
+    dates = [row["date"] for row in rows]
+
+    if dates != sorted(dates):
+        raise AssertionError(
+            "Historical records are not oldest-to-newest"
+        )
+
+    print("PASS: Normalizer accepted real API data")
+    print("Symbol:", result["symbol"])
+    print("Records:", len(rows))
+    print("First date:", dates[0])
+    print("Latest date:", dates[-1])
+    print("Required OHLCV fields: present")
 
 
 if __name__ == "__main__":
