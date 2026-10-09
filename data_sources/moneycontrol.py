@@ -1,6 +1,6 @@
 
 # RupAI Market Intelligence
-# Moneycontrol stock-page data extraction
+# Moneycontrol public stock-page extraction
 
 import re
 from html import unescape
@@ -9,13 +9,14 @@ import requests
 
 
 class MoneycontrolDataSource:
-    """Extract labelled market metrics from a public stock page."""
+    """Fetch public stock pages and extract displayed market values."""
 
     BASE_URL = "https://www.moneycontrol.com"
 
     RELIANCE_URL = (
         "https://www.moneycontrol.com/"
-        "india/stockpricequote/refineries/relianceindustries/RI"
+        "india/stockpricequote/refineries/"
+        "relianceindustries/RI"
     )
 
     HEADERS = {
@@ -25,23 +26,6 @@ class MoneycontrolDataSource:
             "Chrome/131.0.0.0 Safari/537.36"
         ),
         "Accept-Language": "en-IN,en;q=0.9",
-    }
-
-    METRICS = {
-        "open": ["Open"],
-        "previous_close": ["Previous Close"],
-        "volume": ["Volume"],
-        "market_cap_crore": ["Mkt Cap (Rs. Cr.)"],
-        "high": ["High"],
-        "low": ["Low"],
-        "week_52_high": ["52 Week High"],
-        "week_52_low": ["52 Week Low"],
-        "face_value": ["Face Value"],
-        "book_value_per_share": ["Book Value Per Share"],
-        "dividend_yield": ["Dividend Yield"],
-        "ttm_pe": ["TTM PE"],
-        "price_to_book": ["P/B"],
-        "sector_pe": ["Sector PE"],
     }
 
     def __init__(self):
@@ -71,28 +55,16 @@ class MoneycontrolDataSource:
             html,
             flags=re.IGNORECASE | re.DOTALL,
         )
+        html = re.sub(r"<!--.*?-->", " ", html, flags=re.DOTALL)
         html = re.sub(r"<[^>]+>", " ", html)
         html = unescape(html)
         return re.sub(r"\s+", " ", html).strip()
 
     @staticmethod
-    def _extract_metric(text, labels):
-        number = r"([-+]?\d[\d,]*(?:\.\d+)?%?)"
-
-        for label in labels:
-            pattern = (
-                r"(?<![\w])"
-                + re.escape(label)
-                + r"\s*(?:\|\s*|:\s*)"
-                + number
-                + r"(?![\w])"
-            )
-
-            match = re.search(pattern, text, flags=re.IGNORECASE)
-
-            if match:
-                return match.group(1)
-
+    def _search(pattern, text, group=1):
+        match = re.search(pattern, text, flags=re.IGNORECASE)
+        if match:
+            return match.group(group).strip()
         return None
 
     def get_stock_data(self, url=None):
@@ -105,43 +77,89 @@ class MoneycontrolDataSource:
             html,
             flags=re.IGNORECASE | re.DOTALL,
         )
-
         title = (
             unescape(re.sub(r"\s+", " ", title_match.group(1))).strip()
             if title_match
             else None
         )
 
+        number = r"([\d,]+(?:\.\d+)?)"
+        percent = r"([-+]?\d+(?:\.\d+)?%)"
+
+        # Quote pattern seen on the stock page:
+        # price, absolute change, percentage change, "As on" timestamp.
+        quote_pattern = (
+            number
+            + r"\s+([-+]?[\d,]+(?:\.\d+)?)\s*"
+            + r"\((" + r"[-+]?\d+(?:\.\d+)?%" + r")\)\s+"
+            + r"As on\s+(.{1,50}?)(?=\s+(?:Open Trading|Day Range|52 Week Range))"
+        )
+
+        quote = re.search(
+            quote_pattern,
+            text,
+            flags=re.IGNORECASE,
+        )
+
+        displayed_price = quote.group(1) if quote else None
+        price_change = quote.group(2) if quote else None
+        change_percent = quote.group(3) if quote else None
+        as_of = (
+            re.sub(r"\s+", " ", quote.group(4)).strip()
+            if quote
+            else None
+        )
+
+        day_range = re.search(
+            r"Day Range\s+" + number + r"\s+" + number,
+            text,
+            flags=re.IGNORECASE,
+        )
+
+        week_range = re.search(
+            r"52 Week Range\s+" + number + r"\s+" + number,
+            text,
+            flags=re.IGNORECASE,
+        )
+
+        volume = self._search(
+            r"Volume\s+" + number,
+            text,
+        )
+
         fundamentals = {
-            key: self._extract_metric(text, labels)
-            for key, labels in self.METRICS.items()
+            "displayed_price": displayed_price,
+            "price_change": price_change,
+            "change_percent": change_percent,
+            "as_of": as_of,
+            "day_range_low": day_range.group(1) if day_range else None,
+            "day_range_high": day_range.group(2) if day_range else None,
+            "week_52_low": week_range.group(1) if week_range else None,
+            "week_52_high": week_range.group(2) if week_range else None,
+            "volume": volume,
         }
 
         extracted_count = sum(
             value is not None for value in fundamentals.values()
         )
 
-        if extracted_count == 0:
-            raise ValueError(
-                "Page loaded, but no labelled metrics were extracted. "
-                "The page structure may have changed."
-            )
-
         return {
             "source": self.name,
-            "status": "success",
+            "status": "success" if extracted_count else "no_metrics_found",
             "title": title,
             "fundamentals": fundamentals,
             "metrics_extracted": extracted_count,
             "source_url": url,
+            "page_length": len(html),
+            "page_text_preview": text[:1200] if not extracted_count else None,
             "note": (
-                "Extracted displayed page values. Their freshness and "
-                "accuracy have not been independently verified."
+                "Displayed values extracted; freshness and accuracy "
+                "have not been independently verified."
             ),
         }
 
     def get_page_data(self, url):
-        """Keep the original page-connection test available."""
+        """Keep the original page connection test available."""
         html = self.get_page(url)
         text = self._clean_text(html)
 
