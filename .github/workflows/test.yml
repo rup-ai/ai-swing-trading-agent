@@ -1,7 +1,12 @@
-name: Telegram Connection Test
+
+name: RupAI Tests
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
 
 jobs:
   test:
@@ -16,11 +21,19 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install requests
-        run: pip install requests
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          else
+            pip install requests
+          fi
 
-      - name: Run Telegram test
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python -m tests.test_stock_analyzer
+      - name: Run all tests
+        run: |
+          python -m tests.test_market_api
+          python -m tests.test_data_normalizer
+          python -m tests.test_technical_indicators
+          python -m tests.test_trend_analysis
+          python -m tests.test_stock_analyzer
