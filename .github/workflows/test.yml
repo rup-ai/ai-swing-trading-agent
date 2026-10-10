@@ -38,3 +38,4 @@ jobs:
           python -m tests.test_trend_analysis
           python -m tests.test_stock_analyzer
           python -m tests.test_stock_scorer
+          python -m tests.test_stock_ranker
