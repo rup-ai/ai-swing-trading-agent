@@ -44,3 +44,4 @@ jobs:
           python -m tests.test_main_pipeline
           python -m tests.test_telegram_alert
           python -m tests.test_nse_universe
+          python -m tests.test_data_collector
