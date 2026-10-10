@@ -41,3 +41,4 @@ jobs:
           python -m tests.test_stock_ranker
           python -m tests.test_market_scanner
           python -m tests.test_report_formatter
+          python -m tests.test_main_pipeline
