@@ -1,0 +1,28 @@
+
+name: Telegram Delivery Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  telegram-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install requests
+        run: python -m pip install requests
+
+      - name: Send real Telegram test message
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          python -c "from alerts.telegram import TelegramAlert; TelegramAlert().send_message('✅ RupAI Telegram delivery test successful. Real API connection verified.')"
