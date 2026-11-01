@@ -61,7 +61,7 @@ def generate_trade_setup(analysis_result, historical_data):
     indicators = analysis_result.get("indicators", {})
 
     try:
-        entry = float(indicators["close"])
+        entry = float(indicators["latest_close"])
         sma20 = float(indicators["sma_20"])
         sma50 = float(indicators["sma_50"])
         rsi = float(indicators["rsi_14"])
